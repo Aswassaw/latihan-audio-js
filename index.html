@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Music Player</title>
+
+  <style>
+    body {
+      background-color: rgb(235, 235, 235);
+    }
+
+    #music-container {
+      padding: 10px;
+    }
+
+    button {
+      width: 40px;
+      height: 40px;
+      border: none;
+      outline: none;
+      border-radius: 5px;
+      cursor: pointer;
+      background-size: cover;
+      background-color: transparent;
+    }
+
+    #play {
+      background-image: url(./images/play.png);
+    }
+
+    #mute {
+      background-image: url(./images/mute.png);
+    }
+
+    #unmute {
+      background-image: url(./images/unmute.png);
+    }
+
+    #pause {
+      background-image: url(./images/pause.png);
+    }
+
+    #speed-down {
+      background-image: url(./images/speed-down.png);
+    }
+
+    #speed-up {
+      background-image: url(./images/speed-up.png);
+    }
+
+    input[type="range"] {
+      appearance: none;
+      height: 40px;
+      background: #666;
+    }
+
+    input#music-slider {
+      width: 200px;
+    }
+
+    input#volume-slider {
+      width: 100px;
+    }
+
+    .duration-box {
+      display: inline-block;
+      background: #000;
+      color: #fff;
+      padding: 10px;
+      text-align: center;
+      position: relative;
+      top: -15px;
+    }
+
+    #playlist-input {
+      outline: none;
+      font-size: 17px;
+      width: 300px;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="music-container">
+    <!-- Button fast down -->
+    <button id="speed-down"></button>
+    <!-- Button play dan pause -->
+    <button id="play"></button>
+    <!-- Button fast up -->
+    <button id="speed-up"></button>
+    <!-- Music slider -->
+    <input type="range" id="music-slider" max="100" min="0" step="1" value="0">
+    <!-- Kotak surasi -->
+    <div class="duration-box">
+      <span id="now-duration">00:00</span> / <span id="all-duration">00:00</span>
+    </div>
+    <!-- Volume slider -->
+    <input type="range" id="volume-slider" max="100" min="0" step="1" value="30">
+    <!-- Button mute dan unmute -->
+    <button id="unmute"></button>
+
+    <!-- Judul lagu yang dimainkan -->
+    <p id="track-name"></p>
+
+    <!-- Daftar Playlist -->
+    <div><b>Select Music To Play</b></div>
+    <select id="playlist-input" size="6">
+      <option value="1クロエのレクイエム">Chloe Original Ver</option>
+      <option value="2クロエのレクイエム　-スネア-">Chloe Bass Ver</option>
+      <option value="3クロエのレクイエム　-オルゴール-">Chloe Piano Ver</option>
+      <option value="4クロエのレクイエム　-ヴァイオリン-">Chloe Violin Ver</option>
+    </select>
+  </div>
+
+  <script>
+    let playlist = ["クロエのレクイエム.mp3", "クロエのレクイエム　-スネア-.mp3", "クロエのレクイエム　-オルゴール-.mp3", "クロエのレクイエム　-ヴァイオリン-.mp3"];
+    let indexPlaylist = 0;
+
+    let music = new Audio();
+    music.src = "./audio/" + playlist[indexPlaylist];
+    music.loop = false;
+    music.volume = .3;
+
+    function startAudio() {
+      let playButton = document.getElementById("play");
+      let unmuteButton = document.getElementById("unmute");
+      let musicSlider = document.getElementById("music-slider")
+      let volumeSlider = document.getElementById("volume-slider");
+      let nowDuration = document.getElementById("now-duration");
+      let allDuration = document.getElementById("all-duration");
+      let speedDown = document.getElementById("speed-down");
+      let speedUp = document.getElementById("speed-up");
+      let trackName = document.getElementById("track-name");
+
+      // Event ketika music telah berakhir
+      music.addEventListener("ended", () => {
+        changeTrack();
+      })
+
+      trackName.innerText = "Now playing Track " + (indexPlaylist + 1) + " - " + playlist[indexPlaylist];
+
+      // Mengubah track
+      function changeTrack() {
+        if (indexPlaylist === playlist.length - 1) {
+          indexPlaylist = 0;
+        } else {
+          indexPlaylist += 1;
+        }
+
+        music.src = "./audio/" + playlist[indexPlaylist];
+        music.play();
+        trackName.innerText = "Now playing Track " + (indexPlaylist + 1) + " - " + playlist[indexPlaylist];
+      }
+
+      // Play dan Pause event
+      playButton.addEventListener("click", () => {
+        if (music.paused) {
+          music.play();
+          playButton.setAttribute("id", "pause")
+        } else {
+          music.pause();
+          playButton.setAttribute("id", "play")
+        }
+      });
+
+      // Mute dan Unmute event
+      unmuteButton.addEventListener('click', () => {
+        if (music.muted) {
+          music.muted = false;
+          unmuteButton.setAttribute("id", "unmute")
+        } else {
+          music.muted = true;
+          unmuteButton.setAttribute("id", "mute")
+        }
+      })
+
+      // Merubah volume event
+      volumeSlider.addEventListener("mousemove", () => {
+        music.volume = volumeSlider.value / 100;
+      })
+
+      // Merubah duration event
+      let shift = false;
+      musicSlider.addEventListener("mousedown", (e) => {
+        shift = true;
+        setMusicPosition(e);
+      })
+      musicSlider.addEventListener("mousemove", (e) => {
+        setMusicPosition(e);
+      })
+      musicSlider.addEventListener("mouseup", (e) => {
+        shift = false;
+      })
+
+      function setMusicPosition(e) {
+        // Jika mouse yang menggeser sudah melepas (mouseup)
+        if (shift) {
+          let musicPosition = music.duration * (musicSlider.value / 100);
+          music.currentTime = musicPosition;
+        }
+      }
+
+      // Event akan berjalan saat waktu musik berubah-ubah, jadi setiap detik music berkumandang event ini akan berjalan
+      music.addEventListener("timeupdate", () => {
+        if (!shift) {
+          let newTime = music.currentTime * (100 / music.duration);
+          musicSlider.value = newTime
+        }
+
+        let nowMinute = Math.floor(music.currentTime / 60);
+        nowMinute = nowMinute < 10 ? `0${nowMinute}` : nowMinute;
+        let nowSecond = Math.floor(music.currentTime - nowMinute * 60);
+        nowSecond = nowSecond < 10 ? `0${nowSecond}` : nowSecond;
+        nowDuration.innerText = `${nowMinute}:${nowSecond}`;
+
+        let allMinute = Math.floor(music.duration / 60);
+        allMinute = allMinute < 10 ? `0${allMinute}` : allMinute;
+        let allSecond = Math.floor(music.duration - allMinute * 60);
+        allSecond = allSecond < 10 ? `0${allSecond}` : allSecond;
+        allDuration.innerText = `${allMinute}:${allSecond}`;
+      })
+
+      // Event untuk speed up dan speed down
+      let speed = 1;
+      speedDown.addEventListener("click", () => {
+        speed -= 0.2;
+        music.playbackRate = speed;
+      })
+      speedUp.addEventListener("click", () => {
+        speed += 0.2;
+        music.playbackRate = speed;
+      })
+
+      // Playlist
+      let playlistInput = document.getElementById("playlist-input");
+      playlistInput.addEventListener("change", (e) => {
+        music.src = "./audio/" + playlistInput.value.slice(1) + ".mp3";
+        music.play();
+        playButton.setAttribute("id", "pause")
+        trackName.innerText = "Now playing Track " + playlistInput.value.slice(0, 1) + " - " + playlistInput.value.slice(1);
+      })
+    }
+
+    window.addEventListener("load", startAudio)
+  </script>
+</body>
+
+</html>
